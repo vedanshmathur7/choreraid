@@ -33,7 +33,7 @@ KINDS = {
 def make(out: Path, count: int, seed: int) -> int:
     r = random.Random(seed)
     out.mkdir(parents=True, exist_ok=True)
-    names, weights = zip(*[(k, v[0]) for k, v in KINDS.items()])
+    names, weights = zip(*[(k, v[0]) for k, v in KINDS.items()], strict=True)
     made = 0
     now = time.time()
     attempts = 0

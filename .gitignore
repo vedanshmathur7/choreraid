@@ -1,0 +1,5 @@
+__pycache__/
+.env
+.venv/
+demo_mess/
+.pytest_cache/

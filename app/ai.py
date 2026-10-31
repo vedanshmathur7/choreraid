@@ -5,13 +5,15 @@ import asyncio
 import json
 import logging
 import os
+from functools import lru_cache
 
 from .cluster import sanitize_folder
 from .models import Group
 
 log = logging.getLogger("choreraid.ai")
 
-MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+MAX_SAMPLES_PER_GROUP = 12  # keeps the prompt small and fast regardless of folder size
 TIMEOUT_S = float(os.getenv("GEMINI_TIMEOUT", "12"))
 
 SYSTEM_PROMPT = """You are the planner inside ChoreRaid, a game that cleans a messy folder.
@@ -48,12 +50,18 @@ def ai_enabled() -> bool:
     return bool(os.getenv("GEMINI_API_KEY"))
 
 
-def _call_gemini(payload: list[dict]) -> list[dict]:
+@lru_cache(maxsize=1)
+def _client():
+    """One shared Gemini client per process (reuses HTTP connections)."""
     from google import genai
+
+    return genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+
+def _call_gemini(payload: list[dict]) -> list[dict]:
     from google.genai import types
 
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    resp = client.models.generate_content(
+    resp = _client().models.generate_content(
         model=MODEL,
         contents=json.dumps(payload),
         config=types.GenerateContentConfig(
@@ -104,7 +112,7 @@ async def label_groups(groups: list[Group]) -> tuple[list[Group], bool]:
             "rule_category": g.category,
             "count": len(g.files),
             "date_range": g.date_range,
-            "sample_names": g.files[:12],
+            "sample_names": g.files[:MAX_SAMPLES_PER_GROUP],
         }
         for g in groups
     ]

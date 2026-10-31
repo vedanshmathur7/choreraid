@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .models import FileMeta, Group
 
@@ -74,7 +74,7 @@ def category_of(name: str) -> str:
 
 
 def year_month(ms: float) -> str:
-    return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).strftime("%Y-%m")
+    return datetime.fromtimestamp(ms / 1000, tz=UTC).strftime("%Y-%m")
 
 
 def sanitize_folder(path: str) -> str:

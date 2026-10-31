@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChoreRaid: clean your folder by playing</title>
+  <meta name="description" content="A fast game where every move really cleans your messy folder. Powered by Gemini.">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo" aria-hidden="true">⚔️</span> ChoreRaid</div>
+    <ol class="steps" aria-label="Progress">
+      <li id="step-1" class="active">1. Pick folder</li>
+      <li id="step-2">2. Play</li>
+      <li id="step-3">3. Done</li>
+    </ol>
+    <span id="ai-chip" class="chip" title="Which brain is planning your cleanup">Checking AI…</span>
+  </header>
+
+  <main>
+    <!-- SCREEN 1: START -->
+    <section id="screen-start" class="screen active" aria-labelledby="start-title">
+      <h1 id="start-title">Clean your messiest folder<br>by playing a game.</h1>
+      <p class="lead">ChoreRaid turns your files into bosses. <strong>Every move you make really moves the files.</strong></p>
+
+      <div class="cta-row">
+        <button id="btn-pick" class="btn primary big">📁 Choose a messy folder</button>
+        <button id="btn-sample" class="btn big">🎲 Try a sample mess</button>
+      </div>
+      <p id="unsupported" class="warn" hidden>Your browser can't open folders. Use Chrome or Edge on a computer, or press “Try a sample mess”.</p>
+
+      <ul class="how" aria-label="How it works">
+        <li><span class="num">1</span><div><b>AI groups your files</b><br>Only file names are read. Contents never leave your computer.</div></li>
+        <li><span class="num">2</span><div><b>Easy groups clean themselves</b><br>The ones the AI is sure about run in the background.</div></li>
+        <li><span class="num">3</span><div><b>You beat the tricky ones</b><br>One key press sorts hundreds of files. Faster = more points.</div></li>
+      </ul>
+      <p class="safe">🛡️ Nothing is ever deleted. One button undoes everything.</p>
+    </section>
+
+    <!-- SCREEN: LOADING -->
+    <section id="screen-loading" class="screen" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p id="loading-text">Reading file names…</p>
+    </section>
+
+    <!-- SCREEN 2: GAME -->
+    <section id="screen-game" class="screen" aria-label="Game">
+      <div class="stats">
+        <div class="stat wide">
+          <span class="label">Files cleaned</span>
+          <div class="bar"><div id="total-bar" class="fill"></div></div>
+          <span id="total-text" class="value">0 / 0</span>
+        </div>
+        <div class="stat"><span class="label">Score</span><span id="score" class="value">0</span></div>
+        <div class="stat"><span class="label">Combo</span><span id="combo" class="value">x1</span></div>
+        <div class="stat"><span class="label">Time</span><span id="clock" class="value">0:00</span></div>
+      </div>
+
+      <div class="arena">
+        <article id="boss" class="boss" aria-live="polite">
+          <div class="boss-head">
+            <span id="boss-count" class="muted">Boss 1 of 1</span>
+            <span id="boss-conf" class="chip">AI is 60% sure</span>
+          </div>
+          <h2 id="boss-name">Boss</h2>
+          <div class="hp"><div id="boss-hp" class="fill red"></div></div>
+          <p id="boss-hp-text" class="muted">0 files</p>
+
+          <div class="plan">
+            <span class="label">AI plan</span>
+            <p id="boss-plan" class="plan-text">Move to …</p>
+            <p id="boss-reason" class="muted"></p>
+          </div>
+
+          <details open>
+            <summary>Files in this group</summary>
+            <ul id="boss-samples" class="samples"></ul>
+          </details>
+
+          <div class="speed" aria-hidden="true"><div id="speed-bar" class="fill gold"></div></div>
+          <p class="muted tiny">Decide before the gold bar runs out for a speed bonus.</p>
+
+          <div class="actions">
+            <button id="act-accept" class="btn primary"><kbd>→</kbd> <span id="accept-label">Do it</span></button>
+            <button id="act-archive" class="btn"><kbd>←</kbd> Archive instead</button>
+            <button id="act-retarget" class="btn"><kbd>↑</kbd> Choose another folder</button>
+            <button id="act-split" class="btn"><kbd>↓</kbd> Split into smaller groups</button>
+          </div>
+        </article>
+
+        <aside class="side" aria-label="Background cleanup">
+          <h3>🤖 Cleaning by itself</h3>
+          <p class="muted tiny">AI was sure about these, so they run while you play.</p>
+          <ul id="auto-list" class="auto-list"></ul>
+          <h3 class="mt">📜 Live log</h3>
+          <ul id="log" class="log" aria-live="off"></ul>
+        </aside>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: DONE -->
+    <section id="screen-done" class="screen" aria-labelledby="done-title">
+      <h1 id="done-title">🏆 Folder cleared!</h1>
+      <div class="result-grid">
+        <div class="stat"><span class="label">Files sorted</span><span id="r-files" class="value">0</span></div>
+        <div class="stat"><span class="label">Time</span><span id="r-time" class="value">0:00</span></div>
+        <div class="stat"><span class="label">Your decisions</span><span id="r-decisions" class="value">0</span></div>
+        <div class="stat"><span class="label">Score</span><span id="r-score" class="value">0</span></div>
+      </div>
+      <p id="r-leverage" class="lead"></p>
+      <h3>Your folder now</h3>
+      <ul id="r-folders" class="folders"></ul>
+      <p class="muted tiny">A record of every move is saved in your folder as <code>_ChoreRaid_journal.json</code>.</p>
+      <div class="cta-row">
+        <button id="btn-card" class="btn primary">📸 Download score card</button>
+        <button id="btn-undo" class="btn">↩️ Undo everything</button>
+        <button id="btn-again" class="btn">🔁 Clean another folder</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="sr" class="sr-only" aria-live="assertive"></div>
+  <script src="/static/app.js" type="module"></script>
+</body>
+</html>

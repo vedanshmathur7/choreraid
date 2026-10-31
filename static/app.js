@@ -61,11 +61,16 @@ function planText(g) {
 }
 
 // ---------- file system ----------
+// Directory handles are cached by path so each folder is resolved once, not once per file.
+const dirCache = new Map();
 async function getDir(path, create = false) {
+  const key = path.split("/").filter(Boolean).join("/");
+  if (dirCache.has(key)) return dirCache.get(key);
   let dir = state.root;
-  for (const seg of path.split("/").filter(Boolean)) {
+  for (const seg of key.split("/").filter(Boolean)) {
     dir = await dir.getDirectoryHandle(seg, { create });
   }
+  dirCache.set(key, dir);
   return dir;
 }
 async function exists(dir, name) {
@@ -101,13 +106,19 @@ async function moveFile(fromPath, name, toPath, wantName = name) {
   return finalName;
 }
 
+// Reads metadata in parallel batches instead of one file at a time.
+const SCAN_BATCH = 64;
 async function scanTopLevel(dir) {
-  const files = new Map();
+  const handles = [];
   for await (const [name, handle] of dir.entries()) {
     if (handle.kind !== "file" || name.startsWith(".") || name === JOURNAL_FILE) continue;
-    const f = await handle.getFile();
-    files.set(name, { name, size: f.size, mtime: f.lastModified });
-    if (files.size >= MAX_FILES) break;
+    handles.push(handle);
+    if (handles.length >= MAX_FILES) break;
+  }
+  const files = new Map();
+  for (let i = 0; i < handles.length; i += SCAN_BATCH) {
+    const batch = await Promise.all(handles.slice(i, i + SCAN_BATCH).map((h) => h.getFile()));
+    for (const f of batch) files.set(f.name, { name: f.name, size: f.size, mtime: f.lastModified });
   }
   return files;
 }
@@ -213,6 +224,7 @@ function updateTotals() {
 
 // ---------- game flow ----------
 async function start(rootHandle, sandbox) {
+  dirCache.clear();
   Object.assign(state, {
     root: rootHandle, sandbox, fight: [], auto: [], jobs: [], journal: [], createdDirs: new Set(),
     cleaned: 0, score: 0, combo: 1, bestCombo: 1, decisions: 0, bossIndex: 0, busy: false,
